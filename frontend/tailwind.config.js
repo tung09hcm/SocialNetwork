@@ -10,7 +10,6 @@ export default {
 
 	daisyui: {
 		themes: [
-			"black",
 			{
 				black: {
 					...daisyUIThemes["black"],
