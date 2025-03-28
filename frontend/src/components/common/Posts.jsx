@@ -3,7 +3,7 @@ import PostSkeleton from "../skeletons/PostSkeleton";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 
-const Posts = ({ feedType, username, userId }) => {
+const Posts = ({ feedType, username, userId, content }) => {
 	const getPostEndpoint = () => {
 		switch (feedType) {
 			case "forYou":
@@ -14,13 +14,17 @@ const Posts = ({ feedType, username, userId }) => {
 				return `/api/posts/user/${username}`;
 			case "likes":
 				return `/api/posts/likes/${userId}`;
+			case "search":
+				return `/api/posts/search/${content}`;
+			case "saved":
+				return `/api/posts/saved`;
 			default:
 				return "/api/posts/all";
 		}
 	};
 
 	const POST_ENDPOINT = getPostEndpoint();
-
+	console.log(POST_ENDPOINT);
 	const {
 		data: posts,
 		isLoading,

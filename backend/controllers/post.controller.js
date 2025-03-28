@@ -227,3 +227,59 @@ export const getUserPosts = async (req, res) => {
 		res.status(500).json({ error: "Internal server error" });
 	}
 };
+
+export const getSearchPosts = async (req,res) =>{
+	
+	try{
+		const {search} = req.params;
+		console.log("searchContent", search);
+		const posts = await Post.find({
+			text: { $regex: search, $options: "i" }
+		}).populate({
+			path: "user",
+			select: "-password",
+		})
+		.populate({
+			path: "comments.user",
+			select: "-password",
+		});
+		res.status(200).json(posts);
+	}catch(e)
+	{
+		console.log("Error in getSearchPosts controller: ", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+}
+
+export const getSavedPosts = async (req, res) => {
+	const userId = req.params.id;
+
+	try {
+		const user = await User.findById(userId);
+		if (!user) return res.status(404).json({ error: "User not found" });
+
+		const likedPosts = await Post.find({ _id: { $in: user.savedPosts } })
+			.populate({
+				path: "user",
+				select: "-password",
+			})
+			.populate({
+				path: "comments.user",
+				select: "-password",
+			});
+
+		res.status(200).json(likedPosts);
+	} catch (error) {
+		console.log("Error in getLikedPosts controller: ", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+};
+
+export const saveUnsavePost = async (req, res) => {
+	try {
+		
+	} catch (error) {
+		console.log("Error in saveUnsavePost controller: ", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+};
