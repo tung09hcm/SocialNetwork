@@ -45,8 +45,13 @@ const Sidebar = () => {
 		}
 	};
 	const handleSearch = () =>{		
+		if (!search.trim()) {
+			toast.error("Vui lòng nhập nội dung tìm kiếm");
+			return;
+		}
+		const encodedSearch = encodeURIComponent(search.trim());
 		console.log("handle Search Content: ", search);
-		navigate(`/search/${search}`);
+		navigate(`/search/${encodedSearch}`);
 	}
 	return (
 		<div className='md:flex-[2_2_0] w-18 max-w-52'>
@@ -86,7 +91,7 @@ const Sidebar = () => {
 
 					<li className='flex justify-center md:justify-start'>
 						<Link
-							to={`/profile/${authUser?.username}`}
+							to={`/save/${authUser?.username}`}
 							className='flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full duration-300 py-2 pl-2 pr-4 max-w-fit cursor-pointer'
 						>
 							<FaBookmark className='w-6 h-6' />

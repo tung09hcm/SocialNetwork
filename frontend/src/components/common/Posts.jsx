@@ -17,7 +17,7 @@ const Posts = ({ feedType, username, userId, content }) => {
 			case "search":
 				return `/api/posts/search/${content}`;
 			case "saved":
-				return `/api/posts/saved`;
+				return `/api/posts/saved/${username}`;
 			default:
 				return "/api/posts/all";
 		}
@@ -62,7 +62,7 @@ const Posts = ({ feedType, username, userId, content }) => {
 				</div>
 			)}
 			{!isLoading && !isRefetching && posts?.length === 0 && (
-				<p className='text-center my-4'>No posts in this tab. Switch 👻</p>
+				<p className='text-center my-4'>No posts in this tab</p>
 			)}
 			{!isLoading && !isRefetching && posts && (
 				<div>

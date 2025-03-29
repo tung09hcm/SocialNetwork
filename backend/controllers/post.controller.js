@@ -252,13 +252,14 @@ export const getSearchPosts = async (req,res) =>{
 }
 
 export const getSavedPosts = async (req, res) => {
-	const userId = req.params.id;
-
+	console.log("getSavedPost")
+	const { username } = req.params;
+	
 	try {
-		const user = await User.findById(userId);
+		const user = await User.findOne({ username });
 		if (!user) return res.status(404).json({ error: "User not found" });
 
-		const likedPosts = await Post.find({ _id: { $in: user.savedPosts } })
+		const savedPosts = await Post.find({ _id: { $in: user.savedPosts } })
 			.populate({
 				path: "user",
 				select: "-password",
@@ -268,7 +269,7 @@ export const getSavedPosts = async (req, res) => {
 				select: "-password",
 			});
 
-		res.status(200).json(likedPosts);
+		res.status(200).json(savedPosts);
 	} catch (error) {
 		console.log("Error in getLikedPosts controller: ", error);
 		res.status(500).json({ error: "Internal server error" });
@@ -277,7 +278,33 @@ export const getSavedPosts = async (req, res) => {
 
 export const saveUnsavePost = async (req, res) => {
 	try {
-		
+		const userId = req.user._id;
+		const { id: postId } = req.params;
+
+		const post = await Post.findById(postId);
+
+		if (!post) {
+			return res.status(404).json({ error: "Post not found" });
+		}
+
+		const userSavedPost = post.saved.includes(userId);
+
+		if (userSavedPost) {
+			// Unsave post
+			await Post.updateOne({ _id: postId }, { $pull: { saved: userId } });
+			await User.updateOne({ _id: userId }, { $pull: { savedPosts: postId } });
+
+			const updatedSave = post.saved.filter((id) => id.toString() !== userId.toString());
+			res.status(200).json(updatedSave);
+		} else {
+			// Save post
+			post.saved.push(userId);
+			await User.updateOne({ _id: userId }, { $push: { savedPosts: postId } });
+			await post.save();
+
+			const updatedSave = post.saved;
+			res.status(200).json(updatedSave);
+		}
 	} catch (error) {
 		console.log("Error in saveUnsavePost controller: ", error);
 		res.status(500).json({ error: "Internal server error" });
