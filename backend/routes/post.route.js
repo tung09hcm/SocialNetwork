@@ -1,5 +1,7 @@
 import express from "express";
 import { protectRoute } from "../middleware/protectRoute.js";
+
+import multer from"multer";
 import {
 	commentOnPost,
 	createPost,
@@ -11,11 +13,13 @@ import {
 	likeUnlikePost,
 	getSearchPosts,
 	getSavedPosts,
-	saveUnsavePost
+	saveUnsavePost,
+	createPostWithFile
 } from "../controllers/post.controller.js";
 
 const router = express.Router();
-
+const upload = multer({ dest: "uploads/" });
+router.post("/createFile", upload.single("file"), protectRoute, createPostWithFile);
 router.get("/all", protectRoute, getAllPosts);
 router.post("/save/:id", protectRoute, saveUnsavePost);
 router.get("/saved/:username", protectRoute, getSavedPosts);

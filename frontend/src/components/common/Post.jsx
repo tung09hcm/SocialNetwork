@@ -199,6 +199,16 @@ const Post = ({ post }) => {
 								alt=''
 							/>
 						)}
+						{post.file &&(
+							<a
+							href={post.file}
+							target="_blank"
+							rel="noopener noreferrer"
+							style={{ color: "#1DA1F2", textDecoration: "underline" }} // màu xanh + gạch chân như Twitter
+							>
+								{post.file}
+							</a>
+						)}
 					</div>
 					<div className='flex justify-between mt-3'>
 						<div className='flex gap-4 items-center w-2/3 justify-between'>

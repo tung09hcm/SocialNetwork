@@ -2,6 +2,51 @@ import Notification from "../models/notification.model.js";
 import Post from "../models/post.model.js";
 import User from "../models/user.model.js";
 import { v2 as cloudinary } from "cloudinary";
+import fs from "fs";
+export const createPostWithFile = async (req, res) => {
+	try {
+		const { text } = req.body;
+		let file = req.file;	
+		
+		if (file) {
+			console.log("file: ", file);
+		}
+		else{
+			console.log("file null");
+		}
+		const userId = req.user._id.toString();
+
+		const user = await User.findById(userId);
+		if (!user) return res.status(404).json({ message: "User not found" });
+
+		if (!text && !file) {
+			return res.status(400).json({ error: "Post must have text or file" });
+		}
+
+		if (file) {
+			const uploadedResponse = await cloudinary.uploader.upload(file.path, {
+				folder: "posts",				
+			});
+			fs.unlinkSync(file.path);
+			file = uploadedResponse.secure_url;
+		}
+
+		const newPost = new Post({
+			user: userId,
+			text,
+			file,
+		});
+
+		await newPost.save();
+		res.status(201).json(newPost);
+
+		
+	} catch (error) {
+		console.error("Error in createPost controller:", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+};
+
 
 export const createPost = async (req, res) => {
 	try {
