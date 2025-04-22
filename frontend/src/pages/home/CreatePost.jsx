@@ -52,7 +52,7 @@ const CreatePost = () => {
 			const formData = new FormData();
 			formData.append("text", text);
 			formData.append("file", file);
-			
+			console.log("file_info_in_fe", file);
 			const res = await fetch("/api/posts/createFile", {
 				method: "POST",
 				body: formData

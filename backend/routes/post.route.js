@@ -1,7 +1,7 @@
 import express from "express";
 import { protectRoute } from "../middleware/protectRoute.js";
+import { uploadCloud } from "../config/uploadCloud.js";
 
-import multer from"multer";
 import {
 	commentOnPost,
 	createPost,
@@ -18,8 +18,7 @@ import {
 } from "../controllers/post.controller.js";
 
 const router = express.Router();
-const upload = multer({ dest: "uploads/" });
-router.post("/createFile", upload.single("file"), protectRoute, createPostWithFile);
+router.post("/createFile", protectRoute, uploadCloud.single("file"), createPostWithFile);
 router.get("/all", protectRoute, getAllPosts);
 router.post("/save/:id", protectRoute, saveUnsavePost);
 router.get("/saved/:username", protectRoute, getSavedPosts);

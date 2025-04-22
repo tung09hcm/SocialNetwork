@@ -7,7 +7,7 @@ export const createPostWithFile = async (req, res) => {
 	try {
 		const { text } = req.body;
 		let file = req.file;	
-		
+		console.log("flag1");
 		if (file) {
 			console.log("file: ", file);
 		}
@@ -18,23 +18,14 @@ export const createPostWithFile = async (req, res) => {
 
 		const user = await User.findById(userId);
 		if (!user) return res.status(404).json({ message: "User not found" });
-
+		console.log("flag2");
 		if (!text && !file) {
 			return res.status(400).json({ error: "Post must have text or file" });
 		}
-
-		if (file) {
-			const uploadedResponse = await cloudinary.uploader.upload(file.path, {
-				folder: "posts",				
-			});
-			fs.unlinkSync(file.path);
-			file = uploadedResponse.secure_url;
-		}
-
 		const newPost = new Post({
 			user: userId,
 			text,
-			file,
+			file: file.filename,
 		});
 
 		await newPost.save();

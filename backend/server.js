@@ -33,7 +33,16 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/notifications", notificationRoutes);
-
+app.get('/download/:filename', (req, res) => {
+  const filename = req.params.filename; 
+  const filePath = path.join(__dirname, 'backend/uploads', filename); 
+  console.log(filePath);
+  res.download(filePath, filename, (err) => {
+	if (err) {
+	  res.status(500).send('Could not download the file.');
+	}
+  });
+});
 if (process.env.NODE_ENV === "production") {
 	app.use(express.static(path.join(__dirname, "/frontend/dist")));
 

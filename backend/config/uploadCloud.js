@@ -1,8 +1,8 @@
-const multer = require("multer");
-const cloudinary = require("cloudinary").v2; // Sửa import thành require
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
-const dotenv = require("dotenv");
-
+import multer from "multer";
+import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import dotenv from "dotenv";
+import path from "path";
 dotenv.config();
 
 cloudinary.config({
@@ -11,33 +11,16 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const storage = new CloudinaryStorage({
-  cloudinary,
-  resource_type: "raw", // rất quan trọng
-  params: {
-    folder: "CVfiles",
-    format: async (req, file) => "pdf",
-    public_id: (req, file) =>
-      file.originalname.split(".")[0].replaceAll(" ", "") + Date.now(),
-    flags: "attachment",
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'backend/uploads'); // Lưu trữ file trong thư mục 'uploads'
   },
+  filename: (req, file, cb) => {
+    // Đổi tên file theo định dạng 'yyyyMMdd-HHmmss'
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
 });
 
-// Middleware Multer
-const uploadCloud = multer({
-  storage,
-  limits: { fileSize: 20 * 1024 * 1024 }, // Giới hạn 20MB
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ];
-    if (!allowedTypes.includes(file.mimetype)) {
-      return cb(new Error("Only .pdf, .doc, and .docx format allowed!"), false);
-    }
-    cb(null, true);
-  },
-});
+const uploadCloud = multer({ storage: storage });
 
-module.exports = { uploadCloud };
+export { uploadCloud };

@@ -201,7 +201,7 @@ const Post = ({ post }) => {
 						)}
 						{post.file &&(
 							<a
-							href={post.file}
+							href={"http://localhost:5000/download/" + post.file}
 							target="_blank"
 							rel="noopener noreferrer"
 							style={{ color: "#1DA1F2", textDecoration: "underline" }} // màu xanh + gạch chân như Twitter
