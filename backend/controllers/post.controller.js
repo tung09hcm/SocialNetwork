@@ -1,31 +1,56 @@
 import Notification from "../models/notification.model.js";
+import multer from "multer";
 import Post from "../models/post.model.js";
 import User from "../models/user.model.js";
 import { v2 as cloudinary } from "cloudinary";
+import { createClient } from '@supabase/supabase-js';
 import fs from "fs";
+import dotenv from "dotenv";
+dotenv.config();
 export const createPostWithFile = async (req, res) => {
 	try {
 		const { text } = req.body;
+		if (!req.file) {
+			return res.status(400).send('No file uploaded.')
+		}
 		let file = req.file;	
-		console.log("flag1");
-		if (file) {
-			console.log("file: ", file);
-		}
-		else{
-			console.log("file null");
-		}
 		const userId = req.user._id.toString();
 
 		const user = await User.findById(userId);
 		if (!user) return res.status(404).json({ message: "User not found" });
-		console.log("flag2");
 		if (!text && !file) {
 			return res.status(400).json({ error: "Post must have text or file" });
 		}
+		const supabaseUrl = process.env.SUPABASE_URL; // URL của Supabase  
+		const supabaseKey = process.env.SUPABASE_ANON_KEY;
+		; // Khóa API của Supabase
+		const supabase = createClient(supabaseUrl, supabaseKey)
+		
+		const localFilePath = req.file.path
+		const supabaseFilePath = 'uploads/' + req.file.originalname  // Bạn có thể đổi path tùy ý
+		const fileBuffer = fs.readFileSync(localFilePath)
+		const { data, error } = await supabase
+			.storage
+			.from('uploads') 
+			.upload(supabaseFilePath, fileBuffer, {
+				contentType: req.file.mimetype,
+				upsert: true 
+		})
+
+		if (error) {
+		console.error('Upload to Supabase failed:', error.message)
+		return res.status(500).send('Failed to upload to Supabase.')
+		}
+		console.log('Upload to Supabase successful:', data);
+		// Optional: Sau upload có thể xóa file local
+		fs.unlinkSync(localFilePath)
+
+		// https://hsymtqtmibipgkdaawfs.supabase.co/storage/v1/object/public/${data.fullPath}
+
 		const newPost = new Post({
 			user: userId,
 			text,
-			file: file.filename,
+			file: `https://hsymtqtmibipgkdaawfs.supabase.co/storage/v1/object/public/${data.fullPath}`,
 		});
 
 		await newPost.save();
