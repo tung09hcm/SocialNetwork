@@ -6,6 +6,7 @@ import { v2 as cloudinary } from "cloudinary";
 import { createClient } from '@supabase/supabase-js';
 import fs from "fs";
 import dotenv from "dotenv";
+import { v4 as uuidv4 } from 'uuid';
 dotenv.config();
 export const createPostWithFile = async (req, res) => {
 	try {
@@ -26,8 +27,11 @@ export const createPostWithFile = async (req, res) => {
 		; // Khóa API của Supabase
 		const supabase = createClient(supabaseUrl, supabaseKey)
 		
-		const localFilePath = req.file.path
-		const supabaseFilePath = 'uploads/' + req.file.originalname  // Bạn có thể đổi path tùy ý
+		const fileExtension = req.file.originalname.split('.').pop();
+		const uniqueFileName = Date.now() + '-' + uuidv4() + '.' + fileExtension;
+
+		const localFilePath = req.file.path;
+		const supabaseFilePath = 'uploads/' + uniqueFileName;
 		const fileBuffer = fs.readFileSync(localFilePath)
 		const { data, error } = await supabase
 			.storage
