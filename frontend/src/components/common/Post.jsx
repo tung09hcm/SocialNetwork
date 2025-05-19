@@ -2,7 +2,7 @@ import { FaRegComment } from "react-icons/fa";
 import { BiRepost } from "react-icons/bi";
 import { FaRegHeart } from "react-icons/fa";
 import { FaRegBookmark } from "react-icons/fa6";
-import { FaTrash } from "react-icons/fa";
+import { FaTrash, FaArrowAltCircleDown,FaArrowAltCircleUp } from "react-icons/fa";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -19,22 +19,25 @@ const Post = ({ post }) => {
 	const isLiked = post.likes.includes(authUser._id);
 	const isSaved = post.saved.includes(authUser._id);
 	const isMyPost = authUser._id === post.user._id;
-
+	
 	const formattedDate = formatPostDate(post.createdAt);
-
+	console.log("post._id", post._id);	
 	const { mutate: deletePost, isPending: isDeleting } = useMutation({
 		mutationFn: async () => {
 			try {
+				console.log("post._id", post._id);
 				const res = await fetch(`/api/posts/${post._id}`, {
 					method: "DELETE",
 				});
 				const data = await res.json();
 
 				if (!res.ok) {
+					
 					throw new Error(data.error || "Something went wrong");
 				}
 				return data;
 			} catch (error) {
+				console.log(`${post._id}`);
 				throw new Error(error);
 			}
 		},
@@ -43,7 +46,54 @@ const Post = ({ post }) => {
 			queryClient.invalidateQueries({ queryKey: ["posts"] });
 		},
 	});
+	const { mutate: reduceQuantity} = useMutation({
+		mutationFn: async () => {
+			try {
+				console.log("post._id", post._id);
+				const res = await fetch(`/api/posts/reduce/${post._id}`, {
+					method: "POST",
+				});
+				const data = await res.json();
 
+				if (!res.ok) {
+					
+					throw new Error(data.error || "Something went wrong");
+				}
+				return data;
+			} catch (error) {
+				console.log(`${post._id}`);
+				throw new Error(error);
+			}
+		},
+		onSuccess: () => {
+			toast.success("Post deleted successfully");
+			queryClient.invalidateQueries({ queryKey: ["posts"] });
+		},
+	});
+	const { mutate: increaseQuantity} = useMutation({
+		mutationFn: async () => {
+			try {
+				console.log("post._id", post._id);
+				const res = await fetch(`/api/posts/increase/${post._id}`, {
+					method: "POST",
+				});
+				const data = await res.json();
+
+				if (!res.ok) {
+					
+					throw new Error(data.error || "Something went wrong");
+				}
+				return data;
+			} catch (error) {
+				console.log(`${post._id}`);
+				throw new Error(error);
+			}
+		},
+		onSuccess: () => {
+			toast.success("Post deleted successfully");
+			queryClient.invalidateQueries({ queryKey: ["posts"] });
+		},
+	});
 	const { mutate: likePost, isPending: isLiking } = useMutation({
 		mutationFn: async () => {
 			try {
@@ -142,6 +192,19 @@ const Post = ({ post }) => {
 		},
 	});
 
+	const handleReducePost = () => {
+		if (post?.quantity === undefined) return;
+		if (post?.quantity === 0) {
+			toast.error("Số lượng không thể nhỏ hơn 0");
+			return;
+		}
+		reduceQuantity();
+	};
+
+	const handleIncreasePost = () => {
+		increaseQuantity();
+	};
+
 	const handleDeletePost = () => {
 		deletePost();
 	};
@@ -181,17 +244,29 @@ const Post = ({ post }) => {
 							<span>{formattedDate}</span>
 						</span>
 						{isMyPost && (
-							<span className='flex justify-end flex-1'>
+							<span className='flex justify-end flex-1 gap-x-4'>
 								{!isDeleting && (
 									<FaTrash className='cursor-pointer hover:text-red-500' onClick={handleDeletePost} />
 								)}
-
+								{post?.quantity !== undefined && (
+									<FaArrowAltCircleDown className='cursor-pointer hover:text-red-500' onClick={handleReducePost} />
+								)}
+								{post?.quantity !== undefined && (
+									<FaArrowAltCircleUp className='cursor-pointer hover:text-red-500' onClick={handleIncreasePost} />
+								)}
 								{isDeleting && <LoadingSpinner size='sm' />}
 							</span>
 						)}
+						
 					</div>
 					<div className='flex flex-col gap-3 overflow-hidden'>
 						<span>{post.text}</span>
+						{post?.quantity !== undefined && (
+							<span className='text-sm text-gray-500'>
+								Số lượng: {post.quantity}
+							</span>
+						)}
+
 						{post.img && (
 							<img
 								src={post.img}
@@ -204,7 +279,7 @@ const Post = ({ post }) => {
 							href={"" + post.file}
 							target="_blank"
 							rel="noopener noreferrer"
-							style={{ color: "#1DA1F2", textDecoration: "underline" }} // màu xanh + gạch chân như Twitter
+							style={{ color: "#1DA1F2", textDecoration: "underline" }} 
 							>
 								{post.file}
 							</a>

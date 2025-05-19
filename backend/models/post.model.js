@@ -28,6 +28,9 @@ const postSchema = new mongoose.Schema(
 				ref: "User",
 			},
 		],
+		quantity:{
+			type: Number
+		},
 		comments: [
 			{
 				text: {

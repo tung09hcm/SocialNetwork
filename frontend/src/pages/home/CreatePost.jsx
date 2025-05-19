@@ -6,6 +6,8 @@ import { toast } from "react-hot-toast";
 
 const CreatePost = () => {
 	const [text, setText] = useState("");
+	const [tagType, setTagType] = useState("unlimited");
+	const [tagQuantity, setTagQuantity] = useState(1);
 	const [img, setImg] = useState(null);
 	const [file, setFile] = useState(null);
 	const imgRef = useRef(null);
@@ -21,13 +23,13 @@ const CreatePost = () => {
 		isError,
 		error,
 	} = useMutation({
-		mutationFn: async ({ text, img }) => {
+		mutationFn: async ({ text, img, tagQuantity, tagType }) => {
 			const res = await fetch("/api/posts/create", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ text, img }),
+				body: JSON.stringify({ text, img , tagQuantity, tagType}),
 			});
 			const data = await res.json();
 			if (!res.ok) throw new Error(data.error || "Something went wrong");
@@ -48,10 +50,12 @@ const CreatePost = () => {
 		isError: fileError,
 		error: fileErr,
 	} = useMutation({
-		mutationFn: async ({ text, file }) => {
+		mutationFn: async ({ text, file, tagQuantity, tagType }) => {
 			const formData = new FormData();
 			formData.append("text", text);
 			formData.append("file", file);
+			formData.append("tagQuantity", tagQuantity);
+			formData.append("tagType", tagType);
 			console.log("file_info_in_fe", file);
 			const res = await fetch("/api/posts/createFile", {
 				method: "POST",
@@ -73,9 +77,9 @@ const CreatePost = () => {
 	const handleSubmit = (e) => {
 		e.preventDefault();
 		if (file) {
-			createFilePost({ text, file });
+			createFilePost({ text, file, tagQuantity, tagType });
 		} else {
-			createPost({ text, img });
+			createPost({ text, img , tagQuantity, tagType });
 		}
 	};
 
@@ -108,6 +112,35 @@ const CreatePost = () => {
 					onChange={(e) => setText(e.target.value)}
 				/>
 
+				{/* Select tag type */}
+				<div className='flex flex-col gap-1'>
+					<label className='text-sm text-gray-500'>Chọn loại thẻ</label>
+					<select
+						className='select select-bordered w-full'
+						value={tagType}
+						onChange={(e) => setTagType(e.target.value)}
+					>
+						<option value='unlimited'>Không giới hạn</option>
+						<option value='limited'>Số lượng</option>
+					</select>
+				</div>
+
+				{/* Nếu là limited thì hiện input số */}
+				{tagType === 'limited' && (
+					<div className='flex flex-col gap-1'>
+						<label className='text-sm text-gray-500'>Nhập số lượng</label>
+						<input
+							type='number'
+							min={1}
+							className='input input-bordered w-full'
+							value={tagQuantity}
+							onChange={(e) => setTagQuantity(e.target.value)}
+							required
+						/>
+					</div>
+				)}
+
+				{/* Hình ảnh xem trước */}
 				{img && (
 					<div className='relative w-72 mx-auto'>
 						<IoCloseSharp
@@ -121,6 +154,7 @@ const CreatePost = () => {
 					</div>
 				)}
 
+				{/* File xem trước */}
 				{file && (
 					<div className='relative w-fit mx-auto bg-gray-800 p-2 rounded text-white'>
 						<IoCloseSharp
@@ -136,16 +170,10 @@ const CreatePost = () => {
 
 				<div className='flex justify-between border-t py-2 border-t-gray-700'>
 					<div className='flex gap-2 items-center'>
-						<CiImageOn
-							className='fill-primary w-6 h-6 cursor-pointer'
-							onClick={() => imgRef.current.click()}
-						/>
+						<CiImageOn className='fill-primary w-6 h-6 cursor-pointer' onClick={() => imgRef.current.click()} />
 						<input type='file' accept='image/*' hidden ref={imgRef} onChange={handleImgChange} />
 
-						<CiFileOff
-							className='fill-primary w-6 h-6 cursor-pointer'
-							onClick={() => fileRef.current.click()}
-						/>
+						<CiFileOff className='fill-primary w-6 h-6 cursor-pointer' onClick={() => fileRef.current.click()} />
 						<input
 							type='file'
 							accept='.pdf,.doc,.docx,.xls,.xlsx'
@@ -156,13 +184,15 @@ const CreatePost = () => {
 					</div>
 
 					<button className='btn btn-primary rounded-full btn-sm text-white px-4'>
-						{isPending || filePending ? "Posting..." : "Post"}
+						{isPending || filePending ? 'Posting...' : 'Post'}
 					</button>
 				</div>
+
 				{(isError || fileError) && (
 					<div className='text-red-500'>{(error || fileErr)?.message}</div>
 				)}
 			</form>
+
 		</div>
 	);
 };

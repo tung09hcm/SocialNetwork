@@ -11,6 +11,8 @@ dotenv.config();
 export const createPostWithFile = async (req, res) => {
 	try {
 		const { text } = req.body;
+		let { tagType} = req.body;
+		let { tagQuantity} = req.body;
 		if (!req.file) {
 			return res.status(400).send('No file uploaded.')
 		}
@@ -50,15 +52,28 @@ export const createPostWithFile = async (req, res) => {
 		fs.unlinkSync(localFilePath)
 
 		// https://hsymtqtmibipgkdaawfs.supabase.co/storage/v1/object/public/${data.fullPath}
+		if (tagType === "limited"){
+			const newPost = new Post({
+				user: userId,
+				text,
+				file: `https://hsymtqtmibipgkdaawfs.supabase.co/storage/v1/object/public/${data.fullPath}`,
+				quantity: tagQuantity,
+			});
 
-		const newPost = new Post({
-			user: userId,
-			text,
-			file: `https://hsymtqtmibipgkdaawfs.supabase.co/storage/v1/object/public/${data.fullPath}`,
-		});
+			await newPost.save();
+			res.status(201).json(newPost);
+		}
+		else{
+			const newPost = new Post({
+				user: userId,
+				text,
+				file: `https://hsymtqtmibipgkdaawfs.supabase.co/storage/v1/object/public/${data.fullPath}`,
+			});
 
-		await newPost.save();
-		res.status(201).json(newPost);
+			await newPost.save();
+			res.status(201).json(newPost);
+		}
+		
 
 		
 	} catch (error) {
@@ -72,6 +87,10 @@ export const createPost = async (req, res) => {
 	try {
 		const { text } = req.body;
 		let { img } = req.body;
+		let { tagType} = req.body;
+		let { tagQuantity} = req.body;
+		console.log("tagType", tagType);
+		console.log("tagQuantity", tagQuantity);
 		const userId = req.user._id.toString();
 
 		const user = await User.findById(userId);
@@ -85,15 +104,28 @@ export const createPost = async (req, res) => {
 			const uploadedResponse = await cloudinary.uploader.upload(img);
 			img = uploadedResponse.secure_url;
 		}
-
-		const newPost = new Post({
-			user: userId,
-			text,
-			img,
-		});
-
-		await newPost.save();
-		res.status(201).json(newPost);
+		if (tagType === "limited"){
+			const newPost = new Post({
+				user: userId,
+				text,
+				img,
+				quantity: tagQuantity,
+			});
+			console.log("newPost", newPost);
+			await newPost.save();
+			res.status(201).json(newPost);
+		}
+		else{
+			const newPost = new Post({
+				user: userId,
+				text,
+				img,
+			});
+			console.log("newPost", newPost);
+			await newPost.save();
+			res.status(201).json(newPost);
+		}
+		
 	} catch (error) {
 		res.status(500).json({ error: "Internal server error" });
 		console.log("Error in createPost controller: ", error);
@@ -210,7 +242,7 @@ export const getAllPosts = async (req, res) => {
 		if (posts.length === 0) {
 			return res.status(200).json([]);
 		}
-
+		console.log("posts", posts.length);
 		res.status(200).json(posts);
 	} catch (error) {
 		console.log("Error in getAllPosts controller: ", error);
@@ -372,6 +404,50 @@ export const saveUnsavePost = async (req, res) => {
 		}
 	} catch (error) {
 		console.log("Error in saveUnsavePost controller: ", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+};
+
+export const reduceQuantity = async (req, res) => {
+	try {
+		const userId = req.user._id;
+		const { id: postId } = req.params;
+
+		const post = await Post.findById(postId);
+
+		if (!post) {
+			return res.status(404).json({ error: "Post not found" });
+		}
+		post.quantity = post.quantity - 1;
+		if (post.quantity <= 0) {
+			post.quantity = 0;
+		}
+		await post.save();
+		res.status(200).json(post);
+	} catch (error) {
+		console.log("Error in reduceQuantity controller: ", error);
+		res.status(500).json({ error: "Internal server error" });
+	}
+};
+
+export const increaseQuantity = async (req, res) => {
+	try {
+		const userId = req.user._id;
+		const { id: postId } = req.params;
+
+		const post = await Post.findById(postId);
+
+		if (!post) {
+			return res.status(404).json({ error: "Post not found" });
+		}
+		post.quantity = post.quantity + 1;
+		if (post.quantity <= 0) {
+			post.quantity = 0;
+		}
+		await post.save();
+		res.status(200).json(post);
+	} catch (error) {
+		console.log("Error in increaseQuantity controller: ", error);
 		res.status(500).json({ error: "Internal server error" });
 	}
 };
